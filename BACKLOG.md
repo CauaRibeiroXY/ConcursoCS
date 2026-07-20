@@ -36,6 +36,7 @@
 |---|---|---|---|---|
 | S1-01 | Integrar markitdown para converter arquivo → Markdown | E1.1 | M | S0-07 |
 | S1-02 | Parser canônico de Markdown → questões (tipos múltipla e C/E) | E1.2 | L | S1-01 |
+| S1-07 | Fallback de IA para estruturar texto de PDF real em questões | E1.6 | M | S1-01, S2-01 |
 | S1-03 | Validação de questão conforme INV-1 (enunciado, ≥2 alt, gabarito) | E1.5 | M | S1-02 |
 | S1-04 | UI: selecionar/criar banca e matéria no import | E1.3 | M | S0-07 |
 | S1-05 | Auto-divisão por matéria (cabeçalho detectado, não-bloqueante) + fallback | E1.4 | M | S1-02 |

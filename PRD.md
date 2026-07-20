@@ -1,6 +1,6 @@
 # PRD — EstudoConcurso (App de Questões)
 
-**Versão:** 0.1.2 (MVP)
+**Versão:** 0.2.0 (MVP)
 **Status:** Aprovado para desenvolvimento
 **Idioma:** Documentação em pt-BR; código/identificadores em inglês.
 **Dono do produto:** Você (usuário único no MVP)
@@ -15,6 +15,7 @@
 | 0.1.0 | 2026-07-20 | opencode | Criação inicial do PRD (MVP) |
 | 0.1.1 | 2026-07-20 | opencode | Ajustes: sem bloqueio automático de custo (usuário monitora); backup automático; definido template Markdown canônico |
 | 0.1.2 | 2026-07-20 | opencode | Banco migrado para SQLite (zero instalação) via SQLAlchemy; troca para Postgres = mudar DATABASE_URL |
+| 0.2.0 | 2026-07-20 | opencode | Importação de PDFs reais agora usa IA para estruturar o texto (parser canônico continua para arquivos já formatados) |
 
 Toda mudança de escopo gera nova versão e registro no Changelog.
 
@@ -112,8 +113,10 @@ Um app local (computador próprio) onde você (1) importa provas em PDF/Word/etc
 ### E1 — Importação
 - **E1.1** (P0) Importar arquivo (PDF/DOCX/HTML/etc.) e converter para Markdown via markitdown.
   - Aceite: arquivo vira Markdown processável; falha de conversão é reportada sem perda de dados.
-- **E1.2** (P0) Parser canônico extrai questões respeitando INV-1 (tipos múltipla e C/E).
-  - Aceite: cada questão tem enunciado, alternativas e gabarito; questões inválidas são separadas para correção manual.
+- **E1.2** (P0) Parser canônico extrai questões de arquivos já no formato Markdown canônico, respeitando INV-1 (tipos múltipla e C/E).
+  - Aceite: cada questão tem enunciado, alternativas e gabarito; questões inválidas são separadas.
+- **E1.6** (P0) Para PDFs reais (texto livre, sem formato canônico), a IA estrutura o texto convertido em questões (gabarito extraído do texto), reusando o mesmo formato e validação.
+  - Aceite: arquivo de prova real resulta em questões salvas; sem IA configurada, o erro é reportado. INV-3 segue válido (responder importadas não depende de IA em tempo de estudo).
 - **E1.3** (P0) Usuário seleciona/cria a banca no momento do import.
   - Aceite: banca obrigatória; matéria opcional.
 - **E1.4** (P1) Auto-divisão por matéria quando cabeçalho de seção for detectado; **não-bloqueante**; fallback = matéria única nomeada pelo usuário.

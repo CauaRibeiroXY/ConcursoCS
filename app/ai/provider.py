@@ -10,3 +10,8 @@ class AIProvider(ABC):
     def generate_questions(self, bank: str, subject: str, count: int) -> list[dict]:
         """Return raw question dicts (same shape as the parser output)."""
         raise NotImplementedError
+
+    @abstractmethod
+    def structure_questions(self, text: str, bank: str, subject: str) -> list[dict]:
+        """Extract existing questions from raw exam text (gabarito included)."""
+        raise NotImplementedError

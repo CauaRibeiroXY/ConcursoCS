@@ -27,6 +27,21 @@ def _extract_json(text: str) -> list[dict]:
     return json.loads(raw.strip())
 
 
+def _build_structure_prompt(text: str, bank: str, subject: str) -> str:
+    return (
+        f"Abaixo está o texto convertido de uma prova de concurso da banca "
+        f"'{bank}' (matéria '{subject}'). Extraia TODAS as questões objetivas "
+        "existentes no texto, usando o gabarito embutido para definir a resposta "
+        "correta.\n"
+        "Para cada questão retorne um objeto JSON com: statement (enunciado), "
+        "alternatives (objeto com chaves A, B, C... e os textos), answer (lista "
+        "das letras corretas) e justification (objeto com uma chave por "
+        "alternativa; se não souber, use texto vazio).\n"
+        "Responda SOMENTE com um array JSON válido, sem texto ou markdown extra.\n\n"
+        f"TEXTO:\n{text}"
+    )
+
+
 class GeminiProvider(AIProvider):
     def __init__(self, api_key: str | None = None, model: str = _MODEL):
         self._api_key = api_key or GEMINI_API_KEY
@@ -46,4 +61,13 @@ class GeminiProvider(AIProvider):
         data = _extract_json(resp.text)
         for q in data:
             q["type"] = "ce" if len(q.get("alternatives", {})) == 2 else "multiple"
+        return data
+
+    def structure_questions(self, text: str, bank: str, subject: str) -> list[dict]:
+        model = self._genai.GenerativeModel(self._model)
+        resp = model.generate_content(_build_structure_prompt(text, bank, subject))
+        data = _extract_json(resp.text)
+        for q in data:
+            alts = q.get("alternatives", {})
+            q["type"] = "ce" if len(alts) == 2 else "multiple"
         return data
