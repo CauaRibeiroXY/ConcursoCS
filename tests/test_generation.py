@@ -30,8 +30,8 @@ class MockProvider(AIProvider):
             },
         ]
 
-    def structure_questions(self, text, bank, subject):
-        return []
+    def structure_questions(self, text, bank, subject, guidance=None):
+        return [], ""
 
 def test_generate_and_save_persists_valid():
     res = generate_and_save("MockBank", "MockSub", 3, provider=MockProvider())

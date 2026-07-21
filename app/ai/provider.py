@@ -12,6 +12,12 @@ class AIProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def structure_questions(self, text: str, bank: str, subject: str) -> list[dict]:
-        """Extract existing questions from raw exam text (gabarito included)."""
+    def structure_questions(
+        self, text: str, bank: str, subject: str, guidance: str | None = None
+    ) -> tuple[list[dict], str]:
+        """Extract existing questions from raw exam text.
+
+        Returns (questions, layout_description). `guidance` is a previously
+        learned layout description to reuse for the same exam type.
+        """
         raise NotImplementedError

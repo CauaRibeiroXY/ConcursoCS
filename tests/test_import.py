@@ -6,7 +6,7 @@ class MockProvider(AIProvider):
     def generate_questions(self, bank, subject, count):
         return []
 
-    def structure_questions(self, text, bank, subject):
+    def structure_questions(self, text, bank, subject, guidance=None):
         return [
             {
                 "statement": "Q1 estruturada",
@@ -20,7 +20,7 @@ class MockProvider(AIProvider):
                 "answer": ["A"],
                 "justification": {"A": "certo", "B": "errado"},
             },
-        ]
+        ], "layout de teste"
 
 
 def test_import_structured_fallback(tmp_path):

@@ -27,19 +27,31 @@ def _extract_json(text: str) -> list[dict]:
     return json.loads(raw.strip())
 
 
-def _build_structure_prompt(text: str, bank: str, subject: str) -> str:
+def _build_structure_prompt(text: str, bank: str, subject: str, guidance: str | None = None) -> str:
+    prefix = ""
+    if guidance:
+        prefix = (
+            f"Formato conhecido desta banca: {guidance}. Extraia as questões "
+            "seguindo esse mesmo formato.\n"
+        )
     return (
-        f"Abaixo está o texto convertido de uma prova de concurso da banca "
+        f"{prefix}Abaixo está o texto convertido de uma prova de concurso da banca "
         f"'{bank}' (matéria '{subject}'). Extraia TODAS as questões objetivas "
         "existentes no texto, usando o gabarito embutido para definir a resposta "
         "correta.\n"
-        "Para cada questão retorne um objeto JSON com: statement (enunciado), "
-        "alternatives (objeto com chaves A, B, C... e os textos), answer (lista "
-        "das letras corretas) e justification (objeto com uma chave por "
-        "alternativa; se não souber, use texto vazio).\n"
-        "Responda SOMENTE com um array JSON válido, sem texto ou markdown extra.\n\n"
+        "Também produza uma breve descrição do layout (layout_description) para "
+        "reaproveitar em importações futuras da mesma banca.\n"
+        "Responda SOMENTE com um objeto JSON válido, sem texto ou markdown extra, "
+        'no formato: {"layout_description": "...", "questions": [{"statement": "...", '
+        '"alternatives": {"A": "..."}, "answer": ["C"], "justification": {"A": "..."}}]}\n\n'
         f"TEXTO:\n{text}"
     )
+
+
+def _extract_structure(text: str) -> dict:
+    fenced = re.search(r"```(?:json)?\s*(.*?)```", text, re.S)
+    raw = fenced.group(1) if fenced else text
+    return json.loads(raw.strip())
 
 
 class GeminiProvider(AIProvider):
@@ -63,11 +75,15 @@ class GeminiProvider(AIProvider):
             q["type"] = "ce" if len(q.get("alternatives", {})) == 2 else "multiple"
         return data
 
-    def structure_questions(self, text: str, bank: str, subject: str) -> list[dict]:
+    def structure_questions(
+        self, text: str, bank: str, subject: str, guidance: str | None = None
+    ) -> tuple[list[dict], str]:
         model = self._genai.GenerativeModel(self._model)
-        resp = model.generate_content(_build_structure_prompt(text, bank, subject))
-        data = _extract_json(resp.text)
-        for q in data:
+        resp = model.generate_content(_build_structure_prompt(text, bank, subject, guidance))
+        data = _extract_structure(resp.text)
+        questions = data.get("questions", [])
+        description = data.get("layout_description", "")
+        for q in questions:
             alts = q.get("alternatives", {})
             q["type"] = "ce" if len(alts) == 2 else "multiple"
-        return data
+        return questions, description

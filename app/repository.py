@@ -1,7 +1,15 @@
 from sqlalchemy.orm import Session
 
 from app.db import SessionLocal
-from app.models import Attempt, Bank, Question, Subject
+from app.models import Attempt, Bank, Question, Subject, Template
+
+import hashlib
+
+
+def signature_of(text: str, bank_name: str) -> str:
+    """Fingerprint of an exam layout (banca + normalized text snippet)."""
+    snippet = "".join(text.split())[:2000]
+    return hashlib.md5(f"{bank_name}|{snippet}".encode()).hexdigest()
 
 
 def get_or_create_bank(session: Session, name: str, source: str = "imported") -> Bank:
@@ -113,3 +121,14 @@ def fetch_wrong_questions(
                 Subject.name == subject_name
             )
         return q.order_by(Question.created_at).limit(limit).all()
+
+
+def get_template(bank_name: str, signature: str) -> Template | None:
+    with SessionLocal() as s:
+        return s.query(Template).filter_by(banca=bank_name, signature=signature).first()
+
+
+def save_template(bank_name: str, signature: str, description: str) -> None:
+    with SessionLocal() as s:
+        s.add(Template(banca=bank_name, signature=signature, layout_description=description))
+        s.commit()

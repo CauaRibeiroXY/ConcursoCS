@@ -1,6 +1,6 @@
 # PRD — EstudoConcurso (App de Questões)
 
-**Versão:** 0.2.0 (MVP)
+**Versão:** 0.3.0 (MVP)
 **Status:** Aprovado para desenvolvimento
 **Idioma:** Documentação em pt-BR; código/identificadores em inglês.
 **Dono do produto:** Você (usuário único no MVP)
@@ -16,6 +16,7 @@
 | 0.1.1 | 2026-07-20 | opencode | Ajustes: sem bloqueio automático de custo (usuário monitora); backup automático; definido template Markdown canônico |
 | 0.1.2 | 2026-07-20 | opencode | Banco migrado para SQLite (zero instalação) via SQLAlchemy; troca para Postgres = mudar DATABASE_URL |
 | 0.2.0 | 2026-07-20 | opencode | Importação de PDFs reais agora usa IA para estruturar o texto (parser canônico continua para arquivos já formatados) |
+| 0.3.0 | 2026-07-20 | opencode | Cache de templates por (banca, layout): a IA aprende o layout na 1ª importação e reaproveita nas próximas; modelo configurável via GEMINI_MODEL |
 
 Toda mudança de escopo gera nova versão e registro no Changelog.
 
@@ -117,6 +118,8 @@ Um app local (computador próprio) onde você (1) importa provas em PDF/Word/etc
   - Aceite: cada questão tem enunciado, alternativas e gabarito; questões inválidas são separadas.
 - **E1.6** (P0) Para PDFs reais (texto livre, sem formato canônico), a IA estrutura o texto convertido em questões (gabarito extraído do texto), reusando o mesmo formato e validação.
   - Aceite: arquivo de prova real resulta em questões salvas; sem IA configurada, o erro é reportado. INV-3 segue válido (responder importadas não depende de IA em tempo de estudo).
+- **E1.7** (P0) Cache de template por (banca, layout): na primeira importação daquele layout, a IA aprende e salva uma descrição do formato; importações futuras da mesma banca/layout reaproveitam o template (sem precisar pedir template de cada vez).
+  - Aceite: segunda importação do mesmo layout usa o template salvo e não reaprende.
 - **E1.3** (P0) Usuário seleciona/cria a banca no momento do import.
   - Aceite: banca obrigatória; matéria opcional.
 - **E1.4** (P1) Auto-divisão por matéria quando cabeçalho de seção for detectado; **não-bloqueante**; fallback = matéria única nomeada pelo usuário.

@@ -69,3 +69,13 @@ class Attempt(Base):
     answered_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
     question: Mapped["Question"] = relationship(back_populates="attempts")
+
+
+class Template(Base):
+    __tablename__ = "templates"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    banca: Mapped[str] = mapped_column(String, nullable=False)
+    signature: Mapped[str] = mapped_column(String, nullable=False)
+    layout_description: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)

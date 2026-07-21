@@ -2,7 +2,7 @@ from app.ai.factory import get_provider
 from app.ai.provider import AIProvider
 from app.markdown_import import file_to_markdown
 from app.parsing import parse_markdown
-from app.repository import save_valid
+from app.repository import get_template, save_template, save_valid, signature_of
 from app.validation import partition
 
 
@@ -16,7 +16,9 @@ def import_file(path: str, bank_name: str, subject_name: str, provider: AIProvid
 
     Non-blocking: invalid questions are returned, never raised.
     When the canonical parser finds nothing (typical real PDF), the AI structures
-    the raw text into questions (INV-3 still holds for answering imported data).
+    the raw text into questions. The learned layout is cached per (banca, layout)
+    so subsequent imports of the same exam type reuse the template (no need to
+    re-request a template each time).
     """
     md = file_to_markdown(path)
     parsed = parse_markdown(md, bank_name, subject_name)
@@ -25,8 +27,14 @@ def import_file(path: str, bank_name: str, subject_name: str, provider: AIProvid
 
     if not questions:
         provider = provider or get_provider()
-        questions = provider.structure_questions(md, bank_name, subject_name)
-        source_bank = bank_name
+        sig = signature_of(md, bank_name)
+        template = get_template(bank_name, sig)
+        guidance = template.layout_description if template else None
+        questions, description = provider.structure_questions(
+            md, bank_name, subject_name, guidance=guidance
+        )
+        if not template and description:
+            save_template(bank_name, sig, description)
 
     for q in questions:
         _ensure_type(q)
