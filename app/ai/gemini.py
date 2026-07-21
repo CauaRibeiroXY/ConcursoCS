@@ -5,6 +5,19 @@ from app.ai.provider import AIProvider
 from app.config import GEMINI_API_KEY, GEMINI_MODEL
 
 _MODEL = GEMINI_MODEL
+FALLBACK_MODELS = ["gemini-2.5-pro", "gemini-2.0-flash", "gemini-2.5-flash-latest"]
+
+
+def _call_with_fallback(genai, model_list: list[str], prompt: str) -> str:
+    """Try each model in order; return response text from the first that succeeds."""
+    for idx, model_name in enumerate(model_list):
+        try:
+            model = genai.GenerativeModel(model_name)
+            return model.generate_content(prompt).text
+        except Exception:  # noqa: BLE001
+            if idx == len(model_list) - 1:
+                raise
+    return ""  # unreachable
 
 
 def _build_prompt(bank: str, subject: str, count: int) -> str:
@@ -68,9 +81,9 @@ class GeminiProvider(AIProvider):
         self._genai = genai
 
     def generate_questions(self, bank: str, subject: str, count: int) -> list[dict]:
-        model = self._genai.GenerativeModel(self._model)
-        resp = model.generate_content(_build_prompt(bank, subject, count))
-        data = _extract_json(resp.text)
+        models = [self._model] + [m for m in FALLBACK_MODELS if m != self._model]
+        text = _call_with_fallback(self._genai, models, _build_prompt(bank, subject, count))
+        data = _extract_json(text)
         for q in data:
             q["type"] = "ce" if len(q.get("alternatives", {})) == 2 else "multiple"
         return data
@@ -78,9 +91,10 @@ class GeminiProvider(AIProvider):
     def structure_questions(
         self, text: str, bank: str, subject: str, guidance: str | None = None
     ) -> tuple[list[dict], str]:
-        model = self._genai.GenerativeModel(self._model)
-        resp = model.generate_content(_build_structure_prompt(text, bank, subject, guidance))
-        data = _extract_structure(resp.text)
+        models = [self._model] + [m for m in FALLBACK_MODELS if m != self._model]
+        prompt = _build_structure_prompt(text, bank, subject, guidance)
+        resp_text = _call_with_fallback(self._genai, models, prompt)
+        data = _extract_structure(resp_text)
         questions = data.get("questions", [])
         description = data.get("layout_description", "")
         for q in questions:

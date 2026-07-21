@@ -1,3 +1,5 @@
+import re
+
 from app.ai.factory import get_provider
 from app.ai.provider import AIProvider
 from app.markdown_import import file_to_markdown
@@ -9,6 +11,23 @@ from app.validation import partition
 def _ensure_type(q: dict) -> None:
     if "type" not in q:
         q["type"] = "ce" if len(q.get("alternatives", {})) == 2 else "multiple"
+
+
+def _trim_to_questions(md: str) -> str:
+    """Remove boilerplate/instructions before the first real question.
+
+    Heuristic: the first line that starts with a number, is >30 chars long
+    and has letters (indicating a question statement) marks the beginning.
+    Preserves everything from that line onward (including the answer key).
+    """
+    lines = md.splitlines()
+    start = 0
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if re.match(r"^\d+\s", stripped) and len(stripped) > 30 and re.search(r"[A-Za-zÀ-ÿ]", stripped):
+            start = i
+            break
+    return "\n".join(lines[start:])
 
 
 def import_file(path: str, bank_name: str, subject_name: str, provider: AIProvider | None = None) -> dict:
@@ -30,8 +49,9 @@ def import_file(path: str, bank_name: str, subject_name: str, provider: AIProvid
         sig = signature_of(md, bank_name)
         template = get_template(bank_name, sig)
         guidance = template.layout_description if template else None
+        trimmed = _trim_to_questions(md) if not guidance else md
         questions, description = provider.structure_questions(
-            md, bank_name, subject_name, guidance=guidance
+            trimmed, bank_name, subject_name, guidance=guidance
         )
         if not template and description:
             save_template(bank_name, sig, description)
