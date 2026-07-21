@@ -2,9 +2,9 @@ import json
 import re
 
 from app.ai.provider import AIProvider
-from app.config import GEMINI_API_KEY
+from app.config import GEMINI_API_KEY, GEMINI_MODEL
 
-_MODEL = "gemini-1.5-flash"
+_MODEL = GEMINI_MODEL
 
 
 def _build_prompt(bank: str, subject: str, count: int) -> str:
@@ -43,9 +43,9 @@ def _build_structure_prompt(text: str, bank: str, subject: str) -> str:
 
 
 class GeminiProvider(AIProvider):
-    def __init__(self, api_key: str | None = None, model: str = _MODEL):
+    def __init__(self, api_key: str | None = None, model: str | None = None):
         self._api_key = api_key or GEMINI_API_KEY
-        self._model = model
+        self._model = model or GEMINI_MODEL
         if not self._api_key:
             raise RuntimeError(
                 "GEMINI_API_KEY não configurada. Defina no .env para gerar questões."

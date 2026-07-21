@@ -5,4 +5,4 @@ from app.config import GEMINI_API_KEY
 
 def get_provider() -> AIProvider:
     """Single switch point for the AI backend (ADR-4)."""
-    return GeminiProvider(api_key=GEMINI_API_KEY)
+    return GeminiProvider(api_key=GEMINI_API_KEY, model=GEMINI_MODEL)
