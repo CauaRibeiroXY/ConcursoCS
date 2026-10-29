@@ -6,8 +6,7 @@ if os.path.exists(_path):
     os.remove(_path)
 os.environ["DATABASE_URL"] = TEST_DB
 
+import app.models  # noqa: F401, E402
 from app.db import Base, engine  # noqa: E402
-
-import app.models  # noqa: F401
 
 Base.metadata.create_all(engine)

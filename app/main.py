@@ -35,7 +35,8 @@ def render_import():
         "Arquivo da prova (PDF, DOCX, HTML, TXT, MD)",
         type=["pdf", "docx", "html", "txt", "md"],
     )
-    if st.button("Importar") and uploaded is not None:
+    disabled = st.session_state.get("importing", False)
+    if st.button("Importar", disabled=disabled) and uploaded is not None:
         if not bank:
             st.warning("Informe a banca.")
             return
@@ -44,12 +45,18 @@ def render_import():
             tmp.write(uploaded.getbuffer())
             tmp_path = tmp.name
         try:
-            result = import_file(tmp_path, bank, subject or "Geral")
+            st.session_state.importing = True
+            with st.spinner("Importando prova..."):
+                result = import_file(tmp_path, bank, subject or "Geral")
             st.success(f"{result['saved']} questões importadas para '{result['bank']}'.")
+            if result.get("template_learned"):
+                st.toast("Template da banca aprendido automaticamente!")
             if result["invalid_count"]:
                 st.warning(f"{result['invalid_count']} questões ignoradas (inválidas).")
         except Exception as exc:  # noqa: BLE001
             st.error(f"Falha: {exc}")
+        finally:
+            st.session_state.importing = False
 
 
 def render_generate():
@@ -57,17 +64,21 @@ def render_generate():
     bank = st.text_input("Banca", key="g_bank", placeholder="Ex.: FCC")
     subject = st.text_input("Matéria", key="g_subject", placeholder="Ex.: Português")
     count = st.number_input("Quantidade", min_value=1, max_value=50, value=5)
-    if st.button("Gerar"):
+    if st.button("Gerar", disabled=st.session_state.get("generating", False)):
         if not bank or not subject:
             st.warning("Informe banca e matéria.")
             return
         try:
-            result = generate_and_save(bank, subject, count)
+            st.session_state.generating = True
+            with st.spinner(f"Gerando {count} questões para {bank}..."):
+                result = generate_and_save(bank, subject, count)
             st.success(f"{result['saved']} questões geradas e salvas.")
             if result["invalid_count"]:
                 st.warning(f"{result['invalid_count']} geradas inválidas (descartadas).")
         except Exception as exc:  # noqa: BLE001
             st.error(f"Falha: {exc}")
+        finally:
+            st.session_state.generating = False
 
 
 def _render_question(q: Question, prefix: str):
@@ -151,6 +162,10 @@ def render_review():
 
 
 def main() -> None:
+    if "backup_done" not in st.session_state:
+        from app.backup import backup as do_backup
+        do_backup()
+        st.session_state.backup_done = True
     st.title("EstudoConcurso")
     st.caption(f"Questões no banco: {_bank_count()}")
     menu = st.sidebar.radio("Modo", ["Importar", "Gerar (IA)", "Estudar", "Revisar erros"])

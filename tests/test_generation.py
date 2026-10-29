@@ -4,7 +4,9 @@ from app.repository import fetch_questions
 
 
 class MockProvider(AIProvider):
-    def generate_questions(self, bank: str, subject: str, count: int) -> list[dict]:
+    def generate_questions(
+        self, bank: str, subject: str, count: int, template: str | None = None
+    ) -> list[dict]:
         return [
             {
                 "statement": "Q1",

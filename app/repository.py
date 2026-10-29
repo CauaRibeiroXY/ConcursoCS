@@ -1,9 +1,9 @@
+import hashlib
+
 from sqlalchemy.orm import Session
 
 from app.db import SessionLocal
 from app.models import Attempt, Bank, Question, Subject, Template
-
-import hashlib
 
 
 def signature_of(text: str, bank_name: str) -> str:
@@ -132,3 +132,14 @@ def save_template(bank_name: str, signature: str, description: str) -> None:
     with SessionLocal() as s:
         s.add(Template(banca=bank_name, signature=signature, layout_description=description))
         s.commit()
+
+
+def get_template_for_bank(bank_name: str) -> str | None:
+    with SessionLocal() as s:
+        t = (
+            s.query(Template)
+            .filter_by(banca=bank_name)
+            .order_by(Template.created_at.desc())
+            .first()
+        )
+        return t.layout_description if t else None

@@ -1,5 +1,5 @@
-from app.db import Base, engine
 import app.models  # noqa: F401
+from app.db import Base, engine
 
 
 def test_tables_registered():

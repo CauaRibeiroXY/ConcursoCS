@@ -1,4 +1,3 @@
-from app.parsing import parse_markdown
 
 
 def validate_question(q: dict) -> list[str]:
@@ -16,10 +15,9 @@ def validate_question(q: dict) -> list[str]:
     answer = q.get("answer") or []
     if not answer:
         errors.append("gabarito vazio")
-    else:
-        for key in answer:
-            if key not in alternatives:
-                errors.append(f"gabarito '{key}' não existe entre as alternativas")
+    for key in answer:
+        if key not in alternatives:
+            errors.append(f"gabarito '{key}' não existe entre as alternativas")
 
     return errors
 

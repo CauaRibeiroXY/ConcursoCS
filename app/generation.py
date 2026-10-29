@@ -1,7 +1,6 @@
 from app.ai.factory import get_provider
 from app.ai.provider import AIProvider
-from app.repository import save_questions
-from app.validation import partition
+from app.repository import get_template_for_bank, save_questions
 
 
 def validate_ai(q: dict) -> list[str]:
@@ -20,7 +19,8 @@ def generate_and_save(
     bank_name: str, subject_name: str, count: int, provider: AIProvider | None = None
 ) -> dict:
     provider = provider or get_provider()
-    raw = provider.generate_questions(bank_name, subject_name, count)
+    template = get_template_for_bank(bank_name)
+    raw = provider.generate_questions(bank_name, subject_name, count, template=template)
 
     valid: list[dict] = []
     invalid: list[tuple[dict, list[str]]] = []
